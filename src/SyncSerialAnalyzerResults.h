@@ -1,16 +1,16 @@
-#ifndef SIMPLESERIAL_ANALYZER_RESULTS
-#define SIMPLESERIAL_ANALYZER_RESULTS
+#ifndef SYNCSERIAL_ANALYZER_RESULTS
+#define SYNCSERIAL_ANALYZER_RESULTS
 
 #include <AnalyzerResults.h>
 
-class SimpleSerialAnalyzer;
-class SimpleSerialAnalyzerSettings;
+class SyncSerialAnalyzer;
+class SyncSerialAnalyzerSettings;
 
-class SimpleSerialAnalyzerResults : public AnalyzerResults
+class SyncSerialAnalyzerResults : public AnalyzerResults
 {
 public:
-	SimpleSerialAnalyzerResults( SimpleSerialAnalyzer* analyzer, SimpleSerialAnalyzerSettings* settings );
-	virtual ~SimpleSerialAnalyzerResults();
+	SyncSerialAnalyzerResults( SyncSerialAnalyzer* analyzer, SyncSerialAnalyzerSettings* settings );
+	virtual ~SyncSerialAnalyzerResults();
 
 	virtual void GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base );
 	virtual void GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id );
@@ -22,8 +22,8 @@ public:
 protected: //functions
 
 protected:  //vars
-	SimpleSerialAnalyzerSettings* mSettings;
-	SimpleSerialAnalyzer* mAnalyzer;
+	SyncSerialAnalyzerSettings* mSettings;
+	SyncSerialAnalyzer* mAnalyzer;
 };
 
-#endif //SIMPLESERIAL_ANALYZER_RESULTS
+#endif //SYNCSERIAL_ANALYZER_RESULTS
