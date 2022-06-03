@@ -1,73 +1,99 @@
 #include "SyncSerialAnalyzerSettings.h"
 #include <AnalyzerHelpers.h>
 
+#include <memory>
+
+void SyncSerialAnalyzerSettings::UpdateInterfaces()
+{
+    clockInterface->SetChannel( clockChannel );
+    clockPolarityInterface->SetValue( clockPolarity );
+    clockSpaceInterface->SetInteger( clockSpace );
+    dataInterface->SetChannel( dataChannel );
+    dataPolarityInterface->SetValue( dataPolarity );
+}
+
+void SyncSerialAnalyzerSettings::UpdateChannels( bool is_used )
+{
+    ClearChannels();
+    AddChannel( clockChannel, "Clock", is_used );
+    AddChannel( dataChannel, "Data", is_used );
+}
 
 SyncSerialAnalyzerSettings::SyncSerialAnalyzerSettings()
-:	mInputChannel( UNDEFINED_CHANNEL ),
-	mBitRate( 9600 )
+    : clockChannel( UNDEFINED_CHANNEL ), clockPolarity( false ), dataChannel( UNDEFINED_CHANNEL ), dataPolarity( false ), clockSpace( 3 )
 {
-	mInputChannelInterface.reset( new AnalyzerSettingInterfaceChannel() );
-	mInputChannelInterface->SetTitleAndTooltip( "Serial", "Standard Synchronous Serial Analyzer" );
-	mInputChannelInterface->SetChannel( mInputChannel );
+    clockInterface = std::make_unique<AnalyzerSettingInterfaceChannel>();
+    clockInterface->SetTitleAndTooltip( "Clock", "Clock for synchronous serial" );
 
-	mBitRateInterface.reset( new AnalyzerSettingInterfaceInteger() );
-	mBitRateInterface->SetTitleAndTooltip( "Bit Rate (Bits/S)",  "Specify the bit rate in bits per second." );
-	mBitRateInterface->SetMax( 6000000 );
-	mBitRateInterface->SetMin( 1 );
-	mBitRateInterface->SetInteger( mBitRate );
+    clockPolarityInterface = std::make_unique<AnalyzerSettingInterfaceBool>();
+    clockPolarityInterface->SetTitleAndTooltip( "Inverted", "Clock polarity is inverted" );
 
-	AddInterface( mInputChannelInterface.get() );
-	AddInterface( mBitRateInterface.get() );
+    clockSpaceInterface = std::make_unique<AnalyzerSettingInterfaceInteger>();
+    clockSpaceInterface->SetTitleAndTooltip( "Clock space", "Clock space in previous clocks to start a new symbol" );
+    clockSpaceInterface->SetMin( 2 );
+    clockSpaceInterface->SetMax( 10000 );
 
-	AddExportOption( 0, "Export as text/csv file" );
-	AddExportExtension( 0, "text", "txt" );
-	AddExportExtension( 0, "csv", "csv" );
+    dataInterface = std::make_unique<AnalyzerSettingInterfaceChannel>();
+    dataInterface->SetTitleAndTooltip( "Data", "Data for synchronous serial" );
 
-	ClearChannels();
-	AddChannel( mInputChannel, "Serial", false );
+    dataPolarityInterface = std::make_unique<AnalyzerSettingInterfaceBool>();
+    dataPolarityInterface->SetTitleAndTooltip( "Inverted", "Data polarity is inverted" );
+
+    UpdateInterfaces();
+
+    AddInterface( clockInterface.get() );
+    AddInterface( clockPolarityInterface.get() );
+    AddInterface( clockSpaceInterface.get() );
+    AddInterface( dataInterface.get() );
+    AddInterface( dataPolarityInterface.get() );
+
+    AddExportOption( 0, "Export as text/csv file" );
+    AddExportExtension( 0, "text", "txt" );
+    AddExportExtension( 0, "csv", "csv" );
+
+    UpdateChannels( false );
 }
 
-SyncSerialAnalyzerSettings::~SyncSerialAnalyzerSettings()
-{
-}
+SyncSerialAnalyzerSettings::~SyncSerialAnalyzerSettings() = default;
 
 bool SyncSerialAnalyzerSettings::SetSettingsFromInterfaces()
 {
-	mInputChannel = mInputChannelInterface->GetChannel();
-	mBitRate = mBitRateInterface->GetInteger();
+    clockChannel = clockInterface->GetChannel();
+    clockPolarity = clockPolarityInterface->GetValue();
+    clockSpace = clockSpaceInterface->GetInteger();
+    dataChannel = dataInterface->GetChannel();
+    dataPolarity = dataPolarityInterface->GetValue();
 
-	ClearChannels();
-	AddChannel( mInputChannel, "Synchronous Serial Analyzer", true );
+    UpdateChannels( true );
 
-	return true;
-}
-
-void SyncSerialAnalyzerSettings::UpdateInterfacesFromSettings()
-{
-	mInputChannelInterface->SetChannel( mInputChannel );
-	mBitRateInterface->SetInteger( mBitRate );
+    return true;
 }
 
 void SyncSerialAnalyzerSettings::LoadSettings( const char* settings )
 {
-	SimpleArchive text_archive;
-	text_archive.SetString( settings );
+    SimpleArchive text_archive;
+    text_archive.SetString( settings );
 
-	text_archive >> mInputChannel;
-	text_archive >> mBitRate;
+    text_archive >> clockChannel;
+    text_archive >> clockPolarity;
+    text_archive >> clockSpace;
+    text_archive >> dataChannel;
+    text_archive >> dataPolarity;
 
-	ClearChannels();
-	AddChannel( mInputChannel, "Synchronous Serial Analyzer", true );
+    UpdateChannels( true );
 
-	UpdateInterfacesFromSettings();
+    UpdateInterfaces();
 }
 
 const char* SyncSerialAnalyzerSettings::SaveSettings()
 {
-	SimpleArchive text_archive;
+    SimpleArchive text_archive;
 
-	text_archive << mInputChannel;
-	text_archive << mBitRate;
+    text_archive << clockChannel;
+    text_archive << clockPolarity;
+    text_archive << clockSpace;
+    text_archive << dataChannel;
+    text_archive << dataPolarity;
 
-	return SetReturnString( text_archive.GetString() );
+    return SetReturnString( text_archive.GetString() );
 }

@@ -8,22 +8,21 @@ class SyncSerialAnalyzerSettings;
 
 class SyncSerialAnalyzerResults : public AnalyzerResults
 {
-public:
-	SyncSerialAnalyzerResults( SyncSerialAnalyzer* analyzer, SyncSerialAnalyzerSettings* settings );
-	virtual ~SyncSerialAnalyzerResults();
+  public:
+    SyncSerialAnalyzerResults( SyncSerialAnalyzer* analyzer, SyncSerialAnalyzerSettings* settings );
+    ~SyncSerialAnalyzerResults() override;
 
-	virtual void GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base );
-	virtual void GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id );
+    void GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base ) override;
+    void GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id ) override;
 
-	virtual void GenerateFrameTabularText(U64 frame_index, DisplayBase display_base );
-	virtual void GeneratePacketTabularText( U64 packet_id, DisplayBase display_base );
-	virtual void GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base );
+    void GenerateFrameTabularText( U64 frame_index, DisplayBase display_base ) override;
+    void GeneratePacketTabularText( U64 packet_id, DisplayBase display_base ) override;
+    void GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base ) override;
 
-protected: //functions
-
-protected:  //vars
-	SyncSerialAnalyzerSettings* mSettings;
-	SyncSerialAnalyzer* mAnalyzer;
+  protected: // functions
+  protected: // vars
+    SyncSerialAnalyzerSettings* mSettings;
+    SyncSerialAnalyzer* mAnalyzer;
 };
 
-#endif //SYNCSERIAL_ANALYZER_RESULTS
+#endif // SYNCSERIAL_ANALYZER_RESULTS

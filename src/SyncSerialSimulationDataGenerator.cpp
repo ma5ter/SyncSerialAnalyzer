@@ -1,71 +1,55 @@
 #include "SyncSerialSimulationDataGenerator.h"
 #include "SyncSerialAnalyzerSettings.h"
+#include "SyncSerialAnalyzer.h"
 
 #include <AnalyzerHelpers.h>
 
-SyncSerialSimulationDataGenerator::SyncSerialSimulationDataGenerator()
-:	mSerialText( "My first analyzer, woo hoo!" ),
-	mStringIndex( 0 )
-{
-}
+SyncSerialSimulationDataGenerator::SyncSerialSimulationDataGenerator() = default;
 
-SyncSerialSimulationDataGenerator::~SyncSerialSimulationDataGenerator()
-{
-}
+SyncSerialSimulationDataGenerator::~SyncSerialSimulationDataGenerator() = default;
 
 void SyncSerialSimulationDataGenerator::Initialize( U32 simulation_sample_rate, SyncSerialAnalyzerSettings* settings )
 {
-	mSimulationSampleRateHz = simulation_sample_rate;
-	mSettings = settings;
+    mSimulationSampleRateHz = simulation_sample_rate;
+    mSettings = settings;
 
-	mSerialSimulationData.SetChannel( mSettings->mInputChannel );
-	mSerialSimulationData.SetSampleRate( simulation_sample_rate );
-	mSerialSimulationData.SetInitialBitState( BIT_HIGH );
+    SyncSerialAnalyzer::setLoHi( settings->clockPolarity, &bitClock0, &bitClock1 );
+    SyncSerialAnalyzer::setLoHi( settings->dataPolarity, &bitData0, &bitData1 );
+
+    channels.Add( mSettings->clockChannel, simulation_sample_rate, bitClock0 );
+    channels.Add( mSettings->dataChannel, simulation_sample_rate, bitData0 );
+
+    mClockGenerator.Init( 100000, simulation_sample_rate );
 }
 
-U32 SyncSerialSimulationDataGenerator::GenerateSimulationData( U64 largest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channel )
+U32 SyncSerialSimulationDataGenerator::GenerateSimulationData( U64 largest_sample_requested, U32 sample_rate,
+                                                               SimulationChannelDescriptor** simulation_channels )
 {
-	U64 adjusted_largest_sample_requested = AnalyzerHelpers::AdjustSimulationTargetSample( largest_sample_requested, sample_rate, mSimulationSampleRateHz );
+    U64 adjusted_largest_sample_requested =
+        AnalyzerHelpers::AdjustSimulationTargetSample( largest_sample_requested, sample_rate, mSimulationSampleRateHz );
 
-	while( mSerialSimulationData.GetCurrentSampleNumber() < adjusted_largest_sample_requested )
-	{
-		CreateSerialByte();
-	}
+    while( clockData.GetCurrentSampleNumber() < adjusted_largest_sample_requested )
+    {
+        int bits = rand() % 64 + 1;
+        int blank = rand() % 100 + mSettings->clockSpace + 1;
+        U64 value = ( ( U64 )rand() << 32 ) | ( ( U64 )rand() );
 
-	*simulation_channel = &mSerialSimulationData;
-	return 1;
-}
+        channels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( blank ) );
 
-void SyncSerialSimulationDataGenerator::CreateSerialByte()
-{
-	U32 samples_per_bit = mSimulationSampleRateHz / mSettings->mBitRate;
+        while( bits-- )
+        {
+            BitState bit = value & 1ull ? bitData1 : bitData0;
+            value >>= 1;
+            dataData.TransitionIfNeeded(bit);
+            channels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( 0.25f ) );
+            clockData.Transition();
+            channels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( 0.5 ) );
+            clockData.Transition();
+            channels.AdvanceAll( mClockGenerator.AdvanceByHalfPeriod( 0.25f ) );
+        }
+        dataData.TransitionIfNeeded(bitData0);
+    }
 
-	U8 byte = mSerialText[ mStringIndex ];
-	mStringIndex++;
-	if( mStringIndex == mSerialText.size() )
-		mStringIndex = 0;
-
-	//we're currenty high
-	//let's move forward a little
-	mSerialSimulationData.Advance( samples_per_bit * 10 );
-
-	mSerialSimulationData.Transition();  //low-going edge for start bit
-	mSerialSimulationData.Advance( samples_per_bit );  //add start bit time
-
-	U8 mask = 0x1 << 7;
-	for( U32 i=0; i<8; i++ )
-	{
-		if( ( byte & mask ) != 0 )
-			mSerialSimulationData.TransitionIfNeeded( BIT_HIGH );
-		else
-			mSerialSimulationData.TransitionIfNeeded( BIT_LOW );
-
-		mSerialSimulationData.Advance( samples_per_bit );
-		mask = mask >> 1;
-	}
-
-	mSerialSimulationData.TransitionIfNeeded( BIT_HIGH ); //we need to end high
-
-	//lets pad the end a bit for the stop bit:
-	mSerialSimulationData.Advance( samples_per_bit );
+    *simulation_channels = channels.GetArray();
+    return channels.GetCount();
 }

@@ -6,22 +6,29 @@
 
 class SyncSerialAnalyzerSettings : public AnalyzerSettings
 {
-public:
-	SyncSerialAnalyzerSettings();
-	virtual ~SyncSerialAnalyzerSettings();
+  public:
+    SyncSerialAnalyzerSettings();
+    ~SyncSerialAnalyzerSettings() override;
 
-	virtual bool SetSettingsFromInterfaces();
-	void UpdateInterfacesFromSettings();
-	virtual void LoadSettings( const char* settings );
-	virtual const char* SaveSettings();
+    bool SetSettingsFromInterfaces() override;
+    void UpdateInterfaces();
+    void LoadSettings( const char* settings ) override;
+    const char* SaveSettings() override;
 
-	
-	Channel mInputChannel;
-	U32 mBitRate;
+    Channel clockChannel;
+    Channel dataChannel;
+    bool clockPolarity;
+    bool dataPolarity;
 
-protected:
-	std::auto_ptr< AnalyzerSettingInterfaceChannel >	mInputChannelInterface;
-	std::auto_ptr< AnalyzerSettingInterfaceInteger >	mBitRateInterface;
+    int clockSpace;
+
+  protected:
+    std::unique_ptr<AnalyzerSettingInterfaceChannel> clockInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceBool> clockPolarityInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceInteger> clockSpaceInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceChannel> dataInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceBool> dataPolarityInterface;
+    void UpdateChannels( bool is_used );
 };
 
-#endif //SYNCSERIAL_ANALYZER_SETTINGS
+#endif // SYNCSERIAL_ANALYZER_SETTINGS

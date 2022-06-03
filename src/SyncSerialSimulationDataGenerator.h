@@ -3,27 +3,32 @@
 
 #include <SimulationChannelDescriptor.h>
 #include <string>
+#include "AnalyzerHelpers.h"
 class SyncSerialAnalyzerSettings;
 
 class SyncSerialSimulationDataGenerator
 {
-public:
-	SyncSerialSimulationDataGenerator();
-	~SyncSerialSimulationDataGenerator();
+  public:
+    SyncSerialSimulationDataGenerator();
+    ~SyncSerialSimulationDataGenerator();
 
-	void Initialize( U32 simulation_sample_rate, SyncSerialAnalyzerSettings* settings );
-	U32 GenerateSimulationData( U64 newest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channel );
+    void Initialize( U32 simulation_sample_rate, SyncSerialAnalyzerSettings* settings );
+    U32 GenerateSimulationData( U64 newest_sample_requested, U32 sample_rate, SimulationChannelDescriptor** simulation_channels );
 
-protected:
-	SyncSerialAnalyzerSettings* mSettings;
-	U32 mSimulationSampleRateHz;
+  protected:
+    SyncSerialAnalyzerSettings* mSettings;
+    U32 mSimulationSampleRateHz;
 
-protected:
-	void CreateSerialByte();
-	std::string mSerialText;
-	U32 mStringIndex;
+  private:
+    ClockGenerator mClockGenerator;
 
-	SimulationChannelDescriptor mSerialSimulationData;
+    SimulationChannelDescriptorGroup channels;
+    SimulationChannelDescriptor clockData;
+    SimulationChannelDescriptor dataData;
+    BitState bitClock0;
+    BitState bitClock1;
+    BitState bitData0;
+    BitState bitData1;
 
 };
-#endif //SYNCSERIAL_SIMULATION_DATA_GENERATOR
+#endif // SYNCSERIAL_SIMULATION_DATA_GENERATOR
