@@ -11,7 +11,7 @@ class SyncSerialAnalyzerSettings : public AnalyzerSettings
     ~SyncSerialAnalyzerSettings() override;
 
     bool SetSettingsFromInterfaces() override;
-    void UpdateInterfaces();
+    void SetInterfacesFromSettings();
     void LoadSettings( const char* settings ) override;
     const char* SaveSettings() override;
 
@@ -19,6 +19,9 @@ class SyncSerialAnalyzerSettings : public AnalyzerSettings
     Channel dataChannel;
     bool clockPolarity;
     bool dataPolarity;
+    bool startBit;
+    bool stopBit;
+    bool bigEndian;
 
     int clockSpace;
 
@@ -28,6 +31,9 @@ class SyncSerialAnalyzerSettings : public AnalyzerSettings
     std::unique_ptr<AnalyzerSettingInterfaceInteger> clockSpaceInterface;
     std::unique_ptr<AnalyzerSettingInterfaceChannel> dataInterface;
     std::unique_ptr<AnalyzerSettingInterfaceBool> dataPolarityInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceBool> startBitInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceBool> stopBitInterface;
+    std::unique_ptr<AnalyzerSettingInterfaceBool> bigEndianInterface;
     void UpdateChannels( bool is_used );
 };
 

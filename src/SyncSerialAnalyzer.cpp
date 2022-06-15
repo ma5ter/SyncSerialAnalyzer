@@ -71,14 +71,23 @@ void SyncSerialAnalyzer::SetupResults()
         if( !clock_samples )
         {
             clock_samples = samples1;
+            if( settings->startBit )
+            {
+                word_value = 0;
+                bit_display = clock_display = AnalyzerResults::Start;
+            }
         }
         else if( clock_samples * settings->clockSpace < samples0 )
         {
-            // we have a word to save
-            if( true /* default stop bit */ )
+            if( settings->startBit ) {
+                word_bit--;
+            }
+
+            if( settings->stopBit )
             {
                 word_value >>= 1;
-                word_bit--;
+                if (word_bit) word_bit--;
+                bit_display = clock_display = AnalyzerResults::Stop;
             }
 
             Frame frame;
@@ -88,7 +97,7 @@ void SyncSerialAnalyzer::SetupResults()
             frame.mStartingSampleInclusive = ( S64 )frame_starting_sample;
             frame.mEndingSampleInclusive = ( S64 )falling_edge_sample_number;
 
-            if( true /* default is little-endian */ )
+            if( settings->bigEndian )
             {
                 U64 accumulator = 0;
                 for( ; word_bit; word_bit-- )
@@ -112,8 +121,6 @@ void SyncSerialAnalyzer::SetupResults()
             results->AddFrame( frame );
             results->CommitResults();
             ReportProgress( frame.mEndingSampleInclusive );
-
-            bit_display = clock_display = AnalyzerResults::Stop;
         }
 
         U64 marker_sample_number = falling_edge_sample_number - ( samples1 >> 1 );
